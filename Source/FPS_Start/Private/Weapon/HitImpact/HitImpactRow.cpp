@@ -1,5 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FiringPatterns/FiringPattern.h"
+#include "Weapon/HitImpact/HitImpactRow.h"
 
