@@ -29,6 +29,10 @@ struct FWeaponDataRow : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float SpreadIncPerShot = 0.5f;
 
+	// 散布从最大恢复到最初值的时间
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    float SpreadRecoveryTime = 1.f;
+
 	// 每次开火发射的子弹数
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     int32 PelletCount = 1;
@@ -59,7 +63,7 @@ struct FWeaponDataRow : public FTableRowBase
 
     /* 使用的开火策略类 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    TSubclassOf<class UFiringPattern> FiringPatternClass;
+    TSubclassOf<UFiringPattern> FiringPatternClass;
 
 	// 开火动作蒙太奇
     UPROPERTY(EditAnywhere, BlueprintReadOnly)

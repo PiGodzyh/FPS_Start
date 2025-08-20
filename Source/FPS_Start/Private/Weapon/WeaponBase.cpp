@@ -27,12 +27,14 @@ void AWeaponBase::BeginPlay()
 	Super::BeginPlay();
 	check(WeaponDataTable);
 	FWeaponDataRow* WeaponDataRow = WeaponDataTable->FindRow<FWeaponDataRow>(Name, FString::Printf(TEXT("%s"), *Name.ToString()));
+	check(WeaponDataRow);
 
 	WeaponData = *WeaponDataRow;
 	FiringPattern = NewObject<UFiringPattern>(this, WeaponData.FiringPatternClass);
 	check(FiringPattern);
 
 	CurrentBullet = WeaponData.ClipSize;
+	CurrentSpread = WeaponData.SpreadInitial;
 
 	WeaponMesh = Cast<USkeletalMeshComponent>(GetComponentByClass(USkeletalMeshComponent::StaticClass()));
 	check(WeaponMesh)
@@ -46,6 +48,17 @@ void AWeaponBase::BeginPlay()
 void AWeaponBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (!bIsFiring)
+	{
+		if (WeaponData.SpreadRecoveryTime == 0)
+			CurrentSpread = WeaponData.SpreadInitial;
+		else
+		{
+			float StepPerSecond = (WeaponData.SpreadMax - WeaponData.SpreadInitial) / WeaponData.SpreadRecoveryTime;
+			CurrentSpread = FMath::FInterpConstantTo(CurrentSpread, WeaponData.SpreadInitial, DeltaTime, StepPerSecond);
+		}
+	}
 }
 
 void AWeaponBase::AfterFireSingle()
@@ -88,23 +101,40 @@ void AWeaponBase::FireSingle(AController* Attacker)
 void AWeaponBase::StartFire(AController* Attacker)
 {
 	GEngine->AddOnScreenDebugMessage(1, 10, FColor::Green, TEXT("开始射击"));
-	// 设置定时器：每 FireInterval 调用一次 FireSingle
-	GetWorldTimerManager().SetTimer(
-		FireTimerHandle,
-		FTimerDelegate::CreateWeakLambda(this, [this, Attacker]()
-			{
-				FireSingle(Attacker);
-			}),
-		WeaponData.FireIntervals,
-		WeaponData.bAllowAuto,
-		0.f);
+	bIsFiring = true;
+	if (WeaponData.bAllowAuto)
+	{
+		// 设置定时器：每 FireInterval 调用一次 FireSingle
+		GetWorldTimerManager().SetTimer(
+			FireTimerHandle,
+			FTimerDelegate::CreateWeakLambda(this, [this, Attacker]()
+				{
+					FireSingle(Attacker);
+				}),
+			WeaponData.FireIntervals,
+			true,
+			0.f);
+	}
+	else
+	{
+		// 如果不允许自动开火，则直接调用 FireSingle
+		FireSingle(Attacker);
+		GetWorldTimerManager().SetTimer(
+			FireTimerHandle,
+			FTimerDelegate::CreateWeakLambda(this, [this]()
+				{
+					StopFire();
+				}),
+			WeaponData.FireIntervals,
+			false);
+	}
 }
 
 void AWeaponBase::StopFire()
 {
 	GEngine->AddOnScreenDebugMessage(1, 10, FColor::Green, TEXT("停止射击"));
 	GetWorldTimerManager().ClearTimer(FireTimerHandle);
-	CurrentSpread = 0.f; // 停止射击时重置散射角度
+	bIsFiring = false;
 }
 
 void AWeaponBase::Reload()
@@ -134,7 +164,7 @@ void AWeaponBase::Reload()
 
 
 		FString FuncName("PlayReloadAnimation");
-		FPlayReloadAnimParams Params = { Duration / ReloadTime, bIsDry};
+		FPlayReloadAnimParams Params = { Duration / ReloadTime, bIsDry };
 		GEngine->AddOnScreenDebugMessage(30, 10, FColor::Red, FString::Printf(TEXT("%f"), Params.PlayRate));
 		APawn* OwnerPawn = Cast<APawn>(GetOwner());
 		if (OwnerPawn)

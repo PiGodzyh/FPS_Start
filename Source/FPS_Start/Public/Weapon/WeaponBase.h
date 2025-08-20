@@ -50,6 +50,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fire")
 	int32 CurrentBullet = 0;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fire") 
+	bool bIsFiring = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	USkeletalMeshComponent* WeaponMesh;
 
