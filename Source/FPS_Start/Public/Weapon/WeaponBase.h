@@ -31,10 +31,7 @@ protected:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponData")
-	FName Name;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "WeaponData")
-	TObjectPtr<UDataTable> WeaponDataTable = nullptr;
+	FDataTableRowHandle WeaponDataRowHandle;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WeaponData")
 	FWeaponDataRow WeaponData;

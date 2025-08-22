@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Weapon/FiringPatterns/FiringPatternInstantNoPen.h"
-
 #include "Kismet/GameplayStatics.h"
 #include "Weapon/WeaponBase.h"
 #include <Weapon/HitImpact/HitImpactRow.h>
@@ -74,23 +73,29 @@ void UFiringPatternInstantNoPen::FireSingle(AWeaponBase* Weapon, AController* In
 				Hit,
 				Instigator,
 				Weapon,
-				nullptr);
+				UDamageType::StaticClass());
 			FName PhysicalMaterialName = Hit.PhysMaterial->GetFName();
 			FHitImpactRow* HitImpactRow = HitImpactTable->FindRow<FHitImpactRow>(PhysicalMaterialName, FString::Printf(TEXT("%s Row Not Found"), *PhysicalMaterialName.ToString()));
+			if (Hit.Component->IsSimulatingPhysics())
+			{
+				// 如果组件正在模拟物理，则添加冲击力
+				AddImpulse(Hit, ShotDir, Weapon->GetWeaponData().PelletMass, Weapon->GetWeaponData().InitialSpeed);
+			}
+			if (!HitImpactRow)
+			{
+				UE_LOG(LogTemp, Error, TEXT("HitImpactRow not found for %s"), *PhysicalMaterialName.ToString());
+				continue;
+			}
 			SpawnDecal(Hit, HitImpactRow->Decal);
 			SpawnEffect(Hit, HitImpactRow->Effect);
 			PlaySound(Hit, HitImpactRow->Sound);
-			if (Hit.Component->IsSimulatingPhysics())
-			{
-				AddImpulse(Hit, ShotDir,Weapon->GetWeaponData().PelletMass, Weapon->GetWeaponData().InitialSpeed);
-			}
 		}
 		else
 		{
 			UE_LOG(LogTemp, Log, TEXT("碰撞失败"));
 		}
 	}
-	
+
 }
 
 void UFiringPatternInstantNoPen::SpawnDecal(const FHitResult& HitResult, UMaterial* Decal)

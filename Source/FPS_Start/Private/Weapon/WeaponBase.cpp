@@ -9,15 +9,7 @@ AWeaponBase::AWeaponBase()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	static ConstructorHelpers::FObjectFinder<UDataTable> WeaponDataTableFinder(TEXT("/Game/Data/Weapon/DT_WeaponData.DT_WeaponData"));
-	if (WeaponDataTableFinder.Succeeded())
-	{
-		WeaponDataTable = WeaponDataTableFinder.Object;
-	}
-	if (!WeaponDataTable)
-	{
-		UE_LOG(LogTemp, Error, TEXT("HitImpactTable not found!"));
-	}
+
 	WeaponData = FWeaponDataRow();
 }
 
@@ -25,8 +17,8 @@ AWeaponBase::AWeaponBase()
 void AWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
-	check(WeaponDataTable);
-	FWeaponDataRow* WeaponDataRow = WeaponDataTable->FindRow<FWeaponDataRow>(Name, FString::Printf(TEXT("%s"), *Name.ToString()));
+	
+	FWeaponDataRow* WeaponDataRow = WeaponDataRowHandle.GetRow<FWeaponDataRow>(TEXT("武器未设置引用的数据行"));
 	check(WeaponDataRow);
 
 	WeaponData = *WeaponDataRow;
