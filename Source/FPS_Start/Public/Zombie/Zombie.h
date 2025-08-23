@@ -44,6 +44,8 @@ protected:
 	float Health = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Property")
 	float AttackPoint = 10.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Property")
+	bool bIsDead = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
 	TObjectPtr<UAnimInstance> AnimInst = nullptr;
@@ -81,7 +83,6 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-public:
 	UFUNCTION(BlueprintCallable, Category = "Damage")
 	virtual UAnimMontage* SelectHitReactMontage(FName BoneName) const;
 
@@ -95,5 +96,8 @@ public:
 		FDamageEvent const& DamageEvent,
 		AController* EventInstigator,
 		AActor* DamageCauser) override;
+
+	// 处理死亡逻辑
+	virtual void Die(AActor* DamageCauser);
 
 };

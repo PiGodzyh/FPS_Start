@@ -3,7 +3,8 @@
 
 #include "Zombie/Zombie.h"
 #include "Engine/DamageEvents.h"
-#include "ProfilingDebugging/CookStats.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 void AZombie::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
@@ -36,7 +37,6 @@ void AZombie::BeginPlay()
 void AZombie::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -94,11 +94,11 @@ void AZombie::HandlePointDamage(float Damage, const FPointDamageEvent& PointEven
 	// 扣血
 	Health = FMath::Clamp(Health - Damage, 0.f, GetZombieData().MaxHealth);
 
-	//// 6. 死亡
-	//if (Health <= 0.f)
-	//{
-	//	Die(EventInstigator, DamageCauser);
-	//}
+	// 死亡
+	if (Health <= 0.f)
+	{
+		Die(DamageCauser);
+	}
 }
 
 float AZombie::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator,
@@ -120,5 +120,21 @@ float AZombie::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AContro
 	}
 
 	return ActualDamage;
+}
+
+void AZombie::Die(AActor* DamageCauser)
+{
+	UE_LOG(LogTemp, Log, TEXT("丧尸已死亡"));
+	bIsDead = true;
+	// 关闭胶囊体碰撞
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// 开启网格体模拟物理
+	if (USkeletalMeshComponent* ZombieMesh = Cast<USkeletalMeshComponent>(GetComponentByClass(USkeletalMeshComponent::StaticClass())); ZombieMesh)
+	{
+		ZombieMesh->SetSimulatePhysics(true);
+		ZombieMesh->SetAnimationMode(EAnimationMode::Type::AnimationCustomMode);
+		ZombieMesh->SetCastShadow(false);
+		ZombieMesh->SetForcedLOD(3);
+	}
 }
 
