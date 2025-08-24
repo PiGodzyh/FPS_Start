@@ -5,6 +5,7 @@
 #include "Engine/DamageEvents.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Zombie/ZombiePool.h"
 
 void AZombie::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
@@ -17,8 +18,6 @@ AZombie::AZombie()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-
 }
 
 // Called when the game starts or when spawned
@@ -26,11 +25,12 @@ void AZombie::BeginPlay()
 {
 	Super::BeginPlay();
 
-	USkeletalMeshComponent* ZombieMesh = Cast<USkeletalMeshComponent>(GetComponentByClass(USkeletalMeshComponent::StaticClass()));
-	check(ZombieMesh)
-
-		AnimInst = ZombieMesh->GetAnimInstance();
+	GetMesh()->SetAnimInstanceClass(GetZombieData().AnimInstanceClass);
+	AnimInst = GetMesh()->GetAnimInstance();
 	check(AnimInst);
+
+	BackToPool();
+	UE_LOG(LogTemp, Warning, TEXT("this=%p, Name=%s"), this, *GetName());
 }
 
 // Called every frame
@@ -86,9 +86,11 @@ void AZombie::HandlePointDamage(float Damage, const FPointDamageEvent& PointEven
 		// 绑定动画结束回调
 		FOnMontageEnded EndDelegate;
 		EndDelegate.BindUObject(this, &AZombie::OnMontageEnded);
-		AnimInst->Montage_Play(HitAnimMontage);
-		AnimInst->Montage_SetEndDelegate(EndDelegate, HitAnimMontage);
-
+		if (AnimInst)
+		{
+			AnimInst->Montage_Play(HitAnimMontage);
+			AnimInst->Montage_SetEndDelegate(EndDelegate, HitAnimMontage);
+		}
 	}
 
 	// 扣血
@@ -129,12 +131,52 @@ void AZombie::Die(AActor* DamageCauser)
 	// 关闭胶囊体碰撞
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	// 开启网格体模拟物理
-	if (USkeletalMeshComponent* ZombieMesh = Cast<USkeletalMeshComponent>(GetComponentByClass(USkeletalMeshComponent::StaticClass())); ZombieMesh)
-	{
-		ZombieMesh->SetSimulatePhysics(true);
-		ZombieMesh->SetAnimationMode(EAnimationMode::Type::AnimationCustomMode);
-		ZombieMesh->SetCastShadow(false);
-		ZombieMesh->SetForcedLOD(3);
-	}
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetAnimInstanceClass(nullptr);
+	AnimInst = nullptr;
+	GetMesh()->SetCastShadow(false);
+	GetMesh()->SetForcedLOD(3);
+
+	// 延迟10s后回收到对象池
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(
+		TimerHandle,
+		FTimerDelegate::CreateWeakLambda(this, [this]()
+			{
+				if (UZombiePool* Pool = GetGameInstance()->GetSubsystem<UZombiePool>(); Pool)
+				{
+					Pool->Release(this);
+				}
+			}),
+		10.f,
+		false);
+}
+
+void AZombie::BackToPool()
+{
+	Health = GetZombieData().MaxHealth;
+	AttackPoint = GetZombieData().AttackPoint;
+	bIsDead = false;
+	PlayingHitAnim = nullptr;
+	SetActorTickEnabled(false);
+	SetActorEnableCollision(false);
+	SetActorHiddenInGame(true);
+
+	GetMesh()->SetSimulatePhysics(false);
+}
+
+void AZombie::StartPlay()
+{
+	SetActorTickEnabled(true);
+	SetActorEnableCollision(true);
+	SetActorHiddenInGame(false);
+
+	GetMesh()->SetAnimInstanceClass(GetZombieData().AnimInstanceClass);
+	GetMesh()->SetCastShadow(true);
+	GetMesh()->SetForcedLOD(0);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::Type::PhysicsOnly);
+	AnimInst = GetMesh()->GetAnimInstance();
 }
 

@@ -30,6 +30,8 @@ struct FZombieDataRow : public FTableRowBase
 	TObjectPtr<UAnimMontage> LeftArmHitMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Property")
 	TObjectPtr<UAnimMontage> RightArmHitMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	TSubclassOf<UAnimInstance> AnimInstanceClass;
 };
 
 UCLASS()
@@ -46,7 +48,7 @@ protected:
 	float AttackPoint = 10.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Property")
 	bool bIsDead = false;
-
+	// 网格体
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
 	TObjectPtr<UAnimInstance> AnimInst = nullptr;
 
@@ -100,4 +102,11 @@ public:
 	// 处理死亡逻辑
 	virtual void Die(AActor* DamageCauser);
 
+	// 重置状态，准备复用
+	UFUNCTION(BlueprintCallable, Category = "State")
+	virtual void BackToPool();
+
+	// 开始运行
+	UFUNCTION(BlueprintCallable, Category = "State")
+	virtual void StartPlay();
 };
