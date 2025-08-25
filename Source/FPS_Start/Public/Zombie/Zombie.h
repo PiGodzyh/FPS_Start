@@ -31,6 +31,8 @@ struct FZombieDataRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Property")
 	TObjectPtr<UAnimMontage> RightArmHitMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	TArray<TObjectPtr<UAnimMontage>> AttackMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	TSubclassOf<UAnimInstance> AnimInstanceClass;
 };
 
@@ -51,14 +53,14 @@ protected:
 	// 网格体
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
 	TObjectPtr<UAnimInstance> AnimInst = nullptr;
-
 	// 正在播放的受击动画
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	TObjectPtr<UAnimMontage> PlayingHitAnim = nullptr;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "State")
+	bool bDoneDamage = false; // 标记是否已造成伤害，防止多次伤害
 	// 声明回调函数
 	UFUNCTION()
-	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted); 
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 
 	FZombieDataRow GetZombieData() const
@@ -78,7 +80,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -98,6 +100,13 @@ public:
 		FDamageEvent const& DamageEvent,
 		AController* EventInstigator,
 		AActor* DamageCauser) override;
+
+	UFUNCTION(BlueprintCallable)
+	virtual void Attack();
+	UFUNCTION(BlueprintCallable)
+	virtual void TryDoDamage(FName StartBoneName, FName EndBoneName);
+	UFUNCTION(BlueprintCallable)
+	virtual void EndDoDamage();
 
 	// 处理死亡逻辑
 	virtual void Die(AActor* DamageCauser);

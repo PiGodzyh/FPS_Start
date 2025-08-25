@@ -5,6 +5,9 @@
 #include "Engine/DamageEvents.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMeshSocket.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Zombie/ZombiePool.h"
 
 void AZombie::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -122,6 +125,45 @@ float AZombie::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AContro
 	}
 
 	return ActualDamage;
+}
+
+void AZombie::Attack()
+{
+
+	if (!bIsDead && GetZombieData().AttackMontage.Num() > 0)
+	{
+		// 随机选择一个攻击动画播放
+		int32 RandomIndex = FMath::RandRange(0, GetZombieData().AttackMontage.Num() - 1);
+		AnimInst->Montage_Play(GetZombieData().AttackMontage[RandomIndex]);
+	}
+}
+
+void AZombie::TryDoDamage(FName StartBoneName, FName EndBoneName)
+{
+	FVector StartLoc = GetMesh()->GetSocketLocation(StartBoneName);
+	FVector EndLoc = GetMesh()->GetSocketLocation(EndBoneName);
+	FHitResult HitResult;
+	if (!bDoneDamage && UKismetSystemLibrary::SphereTraceSingle(
+		this,
+		StartLoc,
+		EndLoc,
+		20,
+		UEngineTypes::ConvertToTraceType(ECC_GameTraceChannel1),
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::None,
+		HitResult,
+		true))
+	{
+		bDoneDamage = true; // 标记已造成伤害，防止多次伤害
+		UGameplayStatics::ApplyDamage(HitResult.GetActor(), AttackPoint, nullptr, this, UDamageType::StaticClass());
+	}
+
+}
+
+void AZombie::EndDoDamage()
+{
+	bDoneDamage = false; // 重置标记，允许下一次造成伤害
 }
 
 void AZombie::Die(AActor* DamageCauser)
