@@ -192,6 +192,7 @@ void AZombie::Die(AActor* DamageCauser)
 	bIsDead = true;
 	// 关闭胶囊体碰撞
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionProfileName(FName("DeadZombie"));
 	// 开启网格体模拟物理
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->SetAnimInstanceClass(nullptr);
@@ -244,6 +245,7 @@ void AZombie::StartPlay()
 	GetMesh()->SetAnimInstanceClass(GetZombieData().AnimInstanceClass);  
 	GetMesh()->SetCastShadow(true);
 	GetMesh()->SetForcedLOD(0);
+	GetMesh()->SetCollisionProfileName(FName("AliveZombie"));
 
 	if (GetLocalRole() == ROLE_Authority)       // 只在服务器做
 	{
