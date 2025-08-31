@@ -76,9 +76,8 @@ void UZombiePool::BatchSpawn(const TSubclassOf<AZombie>& ZombieClass, const int3
 	{
 		// 生成一个新的丧尸实例
 		FActorSpawnParameters Params = FActorSpawnParameters();
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		AZombie* Zombie = GetWorld()->SpawnActor<AZombie>(ZombieClass, PoolTransform, Params);
-		Zombie->BackToPool();       // 把血、状态机恢复到默认值
 		Buckets[ZombieClass].Add(Zombie);
 	}
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AIController.h"
 #include "GameFramework/Character.h"
 #include "Zombie.generated.h"
 
@@ -34,6 +35,12 @@ struct FZombieDataRow : public FTableRowBase
 	TArray<TObjectPtr<UAnimMontage>> AttackMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	TSubclassOf<UAnimInstance> AnimInstanceClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	TArray<TObjectPtr<UAnimSequenceBase>> IdleAnimation;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	TObjectPtr<UAnimSequenceBase> RunningAnimation;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI")
+	TSubclassOf<AAIController> AIControllerClass;
 };
 
 UCLASS()
@@ -58,11 +65,15 @@ protected:
 	TObjectPtr<UAnimMontage> PlayingHitAnim = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "State")
 	bool bDoneDamage = false; // 标记是否已造成伤害，防止多次伤害
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsAttacking = false; // 标记是否正在攻击
 	// 声明回调函数
 	UFUNCTION()
-	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void OnHitMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	UFUNCTION()
+	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
-
+	UFUNCTION(BlueprintCallable)
 	FZombieDataRow GetZombieData() const
 	{
 		if (ZombieDataRowHandle.DataTable)

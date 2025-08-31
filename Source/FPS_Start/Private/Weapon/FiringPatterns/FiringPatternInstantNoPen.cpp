@@ -51,7 +51,6 @@ void UFiringPatternInstantNoPen::FireSingle(AWeaponBase* Weapon, AController* In
 	int32 PelletCount = Weapon->GetWeaponData().PelletCount;
 	while (PelletCount--)
 	{
-		UE_LOG(LogTemp, Log, TEXT("计算某个弹丸"));
 		// 计算单个弹丸的射线方向
 		const FVector ShotDir = FMath::VRandCone(BaseDir, SpreadRad);
 
@@ -65,7 +64,6 @@ void UFiringPatternInstantNoPen::FireSingle(AWeaponBase* Weapon, AController* In
 		// 执行射线检测并应用伤害	
 		if (World->LineTraceSingleByChannel(Hit, StartLoc, EndLoc, ECC_Visibility, Params))
 		{
-			UE_LOG(LogTemp, Log, TEXT("碰撞成功"));
 			UGameplayStatics::ApplyPointDamage(
 				Hit.GetActor(),
 				Damage,
