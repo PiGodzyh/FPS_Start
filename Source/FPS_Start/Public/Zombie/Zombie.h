@@ -43,6 +43,8 @@ struct FZombieDataRow : public FTableRowBase
 	TSubclassOf<AAIController> AIControllerClass;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FZombieDiedSignature, class AZombie*, Zombie);
+
 UCLASS()
 class FPS_START_API AZombie : public ACharacter
 {
@@ -129,4 +131,8 @@ public:
 	// 开始运行
 	UFUNCTION(BlueprintCallable, Category = "State")
 	virtual void StartPlay();
+
+	// 丧尸死亡事件
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FZombieDiedSignature OnZombieDied;
 };

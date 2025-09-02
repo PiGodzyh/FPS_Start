@@ -7,8 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "Navigation/PathFollowingComponent.h" 
+#include "Kismet/KismetSystemLibrary.h" 
 #include "Zombie/ZombiePool.h"
 
 void AZombie::OnHitMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -114,8 +113,8 @@ void AZombie::HandlePointDamage(float Damage, const FPointDamageEvent& PointEven
 	// 扣血
 	Health = FMath::Clamp(Health - Damage, 0.f, GetZombieData().MaxHealth);
 
-	// 死亡
-	if (Health <= 0.f)
+	// 血量少于0且未死亡，则触发死亡
+	if (Health <= 0.f && !bIsDead)
 	{
 		Die(DamageCauser);
 	}
@@ -207,7 +206,7 @@ void AZombie::Die(AActor* DamageCauser)
 		AICon->Destroy();       // 彻底销毁控制器
 	}
 
-	// 延迟10s后回收到对象池
+	// 延迟后回收到对象池
 	FTimerHandle TimerHandle;
 	GetWorldTimerManager().SetTimer(
 		TimerHandle,
@@ -218,8 +217,10 @@ void AZombie::Die(AActor* DamageCauser)
 					Pool->Release(this);
 				}
 			}),
-		10.f,
+		5.f,
 		false);
+	// 触发丧尸死亡事件
+	OnZombieDied.Broadcast(this);
 }
 
 void AZombie::BackToPool()
@@ -234,6 +235,15 @@ void AZombie::BackToPool()
 	SetActorHiddenInGame(true);
 
 	GetMesh()->SetSimulatePhysics(false);
+
+	// 网格体复位
+	float OffsetZ = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -OffsetZ));
+	GetMesh()->SetRelativeRotation(FRotator::ZeroRotator);
+	// 重置物理状态
+	GetMesh()->ResetAllBodiesSimulatePhysics();   
+	GetMesh()->SetAllPhysicsLinearVelocity(FVector::ZeroVector);
+	GetMesh()->SetAllPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
 }
 
 void AZombie::StartPlay()
@@ -242,7 +252,7 @@ void AZombie::StartPlay()
 	//SetActorEnableCollision(true);
 	SetActorHiddenInGame(false);
 
-	GetMesh()->SetAnimInstanceClass(GetZombieData().AnimInstanceClass);  
+	GetMesh()->SetAnimInstanceClass(GetZombieData().AnimInstanceClass);
 	GetMesh()->SetCastShadow(true);
 	GetMesh()->SetForcedLOD(0);
 	GetMesh()->SetCollisionProfileName(FName("AliveZombie"));
