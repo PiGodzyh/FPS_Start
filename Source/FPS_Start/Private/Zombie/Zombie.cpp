@@ -2,6 +2,8 @@
 
 
 #include "Zombie/Zombie.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayTagContainer.h"
 #include "Engine/DamageEvents.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -116,7 +118,7 @@ void AZombie::HandlePointDamage(float Damage, const FPointDamageEvent& PointEven
 	// 血量少于0且未死亡，则触发死亡
 	if (Health <= 0.f && !bIsDead)
 	{
-		Die(DamageCauser);
+		Die(EventInstigator->GetCharacter());
 	}
 }
 
@@ -185,8 +187,21 @@ void AZombie::EndDoDamage()
 	bDoneDamage = false; // 重置标记，允许下一次造成伤害
 }
 
-void AZombie::Die(AActor* DamageCauser)
+void AZombie::Die(AActor* Attacker)
 {
+	// 触发击杀相关的 GA
+	if (Attacker)
+	{
+		if (UAbilitySystemComponent* ASC = Attacker->FindComponentByClass<UAbilitySystemComponent>())
+		{
+			// 所有带 Ability.OnKill 的 Tag
+			FGameplayTagContainer KillTags;
+			KillTags.AddTag(FGameplayTag::RequestGameplayTag("Ability.OnKill"));
+			UE_LOG(LogTemp, Log, TEXT("击丧尸，尝试回血：击杀Tag是否为空%hhd"),KillTags.IsEmpty());
+			ASC->TryActivateAbilitiesByTag(KillTags, true);
+		}
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("丧尸已死亡"));
 	bIsDead = true;
 	// 关闭胶囊体碰撞
@@ -239,7 +254,7 @@ void AZombie::BackToPool()
 	// 网格体复位
 	float OffsetZ = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -OffsetZ));
-	GetMesh()->SetRelativeRotation(FRotator::ZeroRotator);
+	GetMesh()->SetRelativeRotation(FRotator(0.f,-90.f, 0));
 	// 重置物理状态
 	GetMesh()->ResetAllBodiesSimulatePhysics();   
 	GetMesh()->SetAllPhysicsLinearVelocity(FVector::ZeroVector);

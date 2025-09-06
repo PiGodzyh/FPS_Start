@@ -122,7 +122,7 @@ public:
 	virtual void EndDoDamage();
 
 	// 处理死亡逻辑
-	virtual void Die(AActor* DamageCauser);
+	virtual void Die(AActor* Attacker);
 
 	// 重置状态，准备复用
 	UFUNCTION(BlueprintCallable, Category = "State")
