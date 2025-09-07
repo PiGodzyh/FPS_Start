@@ -7,7 +7,7 @@
 #include "Engine/DamageEvents.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h" 
 #include "Zombie/ZombiePool.h"
@@ -20,6 +20,11 @@ void AZombie::OnHitMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 void AZombie::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	bIsAttacking = false; // 攻击动画结束，重置攻击状态
+
+	// 通知行为树
+	if (AAIController* AICon = Cast<AAIController>(GetController()))
+		if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
+			BB->SetValueAsBool("IsAttacking", false);
 }
 
 // Sets default values
@@ -50,12 +55,6 @@ void AZombie::BeginPlay()
 void AZombie::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (bIsAttacking)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Vel=%.1f Accel=%.1f"),
-			GetVelocity().Size(),
-			GetCharacterMovement()->GetCurrentAcceleration().Size());
-	}
 }
 
 // Called to bind functionality to input
@@ -93,7 +92,7 @@ void AZombie::HandlePointDamage(float Damage, const FPointDamageEvent& PointEven
 		return;
 	}
 
-	// 1播放受击动画
+	// 播放受击动画
 	if (PlayingHitAnim != HitAnimMontage)
 	{
 		// 如果当前正在播放的受击动画和新动画不一致，先停止当前动画
@@ -197,7 +196,6 @@ void AZombie::Die(AActor* Attacker)
 			// 所有带 Ability.OnKill 的 Tag
 			FGameplayTagContainer KillTags;
 			KillTags.AddTag(FGameplayTag::RequestGameplayTag("Ability.OnKill"));
-			UE_LOG(LogTemp, Log, TEXT("击丧尸，尝试回血：击杀Tag是否为空%hhd"),KillTags.IsEmpty());
 			ASC->TryActivateAbilitiesByTag(KillTags, true);
 		}
 	}
@@ -274,12 +272,12 @@ void AZombie::StartPlay()
 
 	if (GetLocalRole() == ROLE_Authority)       // 只在服务器做
 	{
+		UE_LOG(LogTemp, Warning, TEXT("丧尸AI开始运行"));
 		FActorSpawnParameters SpawnInfo;
 		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnInfo.Owner = this;
 
 		AAIController* NewAICon = GetWorld()->SpawnActor<AAIController>(GetZombieData().AIControllerClass, GetActorLocation(), GetActorRotation(), SpawnInfo);
-		NewAICon->Possess(nullptr);
+		NewAICon->Possess(this);
 	}
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);

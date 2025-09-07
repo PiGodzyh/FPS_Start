@@ -23,7 +23,8 @@ void UZombiePool::WarmPool(const TArray<FZombieSpawnData>& ZombieSpawnDataArray)
 		int32 Count = Pair.Value;
 		if (!Buckets.Contains(ZombieClass))
 			CreateBucket(ZombieClass);
-		BatchSpawn(ZombieClass, Count);
+		// 补充到指定数量
+		BatchSpawn(ZombieClass, Count - Buckets[ZombieClass].Num());
 	}
 }
 

@@ -64,6 +64,7 @@ void UFiringPatternInstantNoPen::FireSingle(AWeaponBase* Weapon, AController* In
 		// 执行射线检测并应用伤害	
 		if (World->LineTraceSingleByChannel(Hit, StartLoc, EndLoc, ECC_Visibility, Params))
 		{
+			UE_LOG(LogTemp, Log, TEXT("射到%s"),*(Hit.GetActor()->GetName()));
 			UGameplayStatics::ApplyPointDamage(
 				Hit.GetActor(),
 				Damage,
