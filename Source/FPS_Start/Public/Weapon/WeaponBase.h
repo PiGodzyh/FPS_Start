@@ -78,6 +78,10 @@ public:
 	// 获取武器数据
 	const FWeaponDataRow& GetWeaponData() const { return WeaponData; }
 
+	// 获取武器Tah
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	FGameplayTag GetWeaponTag() const { return WeaponData.WeaponTag; }
+
 	// 发射单发后减少子弹等逻辑
 	virtual void AfterFireSingle();
 

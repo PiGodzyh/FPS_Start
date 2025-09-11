@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Engine/DataTable.h"
 #include "WeaponDataRow.generated.h"
 
@@ -12,6 +13,10 @@ USTRUCT(BlueprintType)
 struct FWeaponDataRow : public FTableRowBase
 {
     GENERATED_BODY()
+
+    // 游戏标签
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayTag WeaponTag;
 
 	// 弹夹容量
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
