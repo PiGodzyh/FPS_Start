@@ -45,10 +45,6 @@ void AZombie::BeginPlay()
 
 	BackToPool();
 	UE_LOG(LogTemp, Warning, TEXT("this=%p, Name=%s"), this, *GetName());
-
-	// 让丧尸忽略自定义通道1（丧尸攻击检测通道）
-	GetMesh()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
 }
 
 // Called every frame
@@ -80,7 +76,7 @@ inline UAnimMontage* AZombie::SelectHitReactMontage(FName BoneName) const
 void AZombie::HandlePointDamage(float Damage, const FPointDamageEvent& PointEvent, AController* EventInstigator,
 	AActor* DamageCauser)
 {
-	// 骨骼命中位置（可用于精准断肢）
+	// 骨骼命中位置
 	FName BoneName = PointEvent.HitInfo.BoneName;
 	UAnimMontage* HitAnimMontage = SelectHitReactMontage(BoneName);
 
@@ -207,8 +203,7 @@ void AZombie::Die(AActor* Attacker)
 	GetMesh()->SetCollisionProfileName(FName("DeadZombie"));
 	// 开启网格体模拟物理
 	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->SetAnimInstanceClass(nullptr);
-	AnimInst = nullptr;
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationCustomMode, false);
 	GetMesh()->SetCastShadow(false);
 	GetMesh()->SetForcedLOD(3);
 
@@ -244,7 +239,6 @@ void AZombie::BackToPool()
 	PlayingHitAnim = nullptr;
 
 	SetActorTickEnabled(false);
-	//SetActorEnableCollision(false);
 	SetActorHiddenInGame(true);
 
 	GetMesh()->SetSimulatePhysics(false);
@@ -254,18 +248,16 @@ void AZombie::BackToPool()
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -OffsetZ));
 	GetMesh()->SetRelativeRotation(FRotator(0.f,-90.f, 0));
 	// 重置物理状态
-	GetMesh()->ResetAllBodiesSimulatePhysics();   
-	GetMesh()->SetAllPhysicsLinearVelocity(FVector::ZeroVector);
-	GetMesh()->SetAllPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+	GetMesh()->ResetAllBodiesSimulatePhysics();
+	GetMesh()->RecreatePhysicsState();
 }
 
 void AZombie::StartPlay()
 {
 	SetActorTickEnabled(true);
-	//SetActorEnableCollision(true);
 	SetActorHiddenInGame(false);
 
-	GetMesh()->SetAnimInstanceClass(GetZombieData().AnimInstanceClass);
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint, false);
 	GetMesh()->SetCastShadow(true);
 	GetMesh()->SetForcedLOD(0);
 	GetMesh()->SetCollisionProfileName(FName("AliveZombie"));
