@@ -8,17 +8,6 @@
 #include "WavesDataAsset.h"
 #include "ZombiePool.generated.h"
 
-//USTRUCT()
-//struct FZombieBucket
-//{
-//    GENERATED_BODY()
-//
-//    UPROPERTY(EditDefaultsOnly)
-//    AZombie* Proto = nullptr;   // 原型模板
-//    UPROPERTY(EditDefaultsOnly)
-//        // 空闲实例
-//};
-
 class AZombie;
 /**
  * 丧尸对象池

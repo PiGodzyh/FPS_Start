@@ -12,7 +12,7 @@ void UZombiePool::WarmPool(const TArray<FZombieSpawnData>& ZombieSpawnDataArray)
 	for (const FZombieSpawnData& ZombieSpawnData : ZombieSpawnDataArray)
 	{
 		TSubclassOf<AZombie> ZombieClass = ZombieSpawnData.ZombieClass;
-		int32 Count = ZombieSpawnData.Count >> 1; // 预生成一半数量
+		int32 Count = ZombieSpawnData.Count; // 预生成所有丧尸
 		ZombieSumMap.FindOrAdd(ZombieClass) += Count;
 		
 	}
