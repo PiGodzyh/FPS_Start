@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BuffSelectFunctionLibrary.generated.h"
@@ -82,5 +83,5 @@ public:
 	static TArray<FSelectedBuff> SelectBuffClass(const UDataTable* BuffDataTable, const FGameplayTag& CurrentWeaponTag, const FGameplayTagContainer& CurrentBuffTags, const TMap<FGameplayTag, FBuffInfo>& BuffLevel);
 	// 给ASC添加buff能力，并更新BuffInfo
 	UFUNCTION(BlueprintCallable)
-	static void AddBuff(UAbilitySystemComponent* ASC, UPARAM(Ref) TMap<FGameplayTag, FBuffInfo>& BuffInfo, TSubclassOf<UGameplayAbility> AbilityClass, const FGameplayTag& BuffTag);
+	static FGameplayAbilitySpecHandle AddBuff(UAbilitySystemComponent* ASC, UPARAM(Ref) TMap<FGameplayTag, FBuffInfo>& BuffInfo, TSubclassOf<UGameplayAbility> AbilityClass, const FGameplayTag& BuffTag);
 };

@@ -180,10 +180,15 @@ void AWeaponBase::Reload()
 		ReloadTimerHandle,
 		FTimerDelegate::CreateWeakLambda(this, [this]()
 			{
-				CurrentBullet = WeaponData.ClipSize;
+				SetCurrentBullet(WeaponData.ClipSize);
 			}),
 		WeaponData.ReloadTime,
 		false);
+}
+
+void AWeaponBase::RefundAmmo(int32 AmmoCount)
+{
+	SetCurrentBullet(AmmoCount + CurrentBullet);
 }
 
 

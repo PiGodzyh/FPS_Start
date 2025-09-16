@@ -7,6 +7,7 @@
 
 UFiringPatternInstantNoPen::UFiringPatternInstantNoPen()
 {
+	// 加载命中特效、贴花、音效数据表	
 	static ConstructorHelpers::FObjectFinder<UDataTable> HitImpactTableFinder(TEXT("/Game/Data/Weapon/DT_HitImpactInstant.DT_HitImpactInstant"));
 	if (HitImpactTableFinder.Succeeded())
 	{
@@ -64,7 +65,7 @@ void UFiringPatternInstantNoPen::FireSingle(AWeaponBase* Weapon, AController* In
 		// 执行射线检测并应用伤害	
 		if (World->LineTraceSingleByChannel(Hit, StartLoc, EndLoc, ECC_Visibility, Params))
 		{
-			UE_LOG(LogTemp, Log, TEXT("射到%s"),*(Hit.GetActor()->GetName()));
+			UE_LOG(LogTemp, Log, TEXT("射到%s"), *(Hit.GetActor()->GetName()));
 			UGameplayStatics::ApplyPointDamage(
 				Hit.GetActor(),
 				Damage,
@@ -88,6 +89,9 @@ void UFiringPatternInstantNoPen::FireSingle(AWeaponBase* Weapon, AController* In
 			SpawnDecal(Hit, HitImpactRow->Decal);
 			SpawnEffect(Hit, HitImpactRow->Effect);
 			PlaySound(Hit, HitImpactRow->Sound);
+
+			// 应用 GameplayEffect
+			ApplyGameplayEffect(Instigator, Hit);
 		}
 		else
 		{

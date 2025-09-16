@@ -19,6 +19,9 @@ bool UBuffSelectFunctionLibrary::IsInCurrentBuffs(const FGameplayTag& BuffTag, c
 
 bool UBuffSelectFunctionLibrary::IsMatchedWeapon(FGameplayTag WeaponTag, const FGameplayTagContainer& WeaponTags)
 {
+	// 如果没有要求武器标签，则视为匹配
+	if (WeaponTags.Num() == 0)
+		return true;
 	while (WeaponTag.IsValid())
 	{
 		if (WeaponTags.HasTag(WeaponTag))return true;
@@ -79,10 +82,10 @@ TArray<FSelectedBuff> UBuffSelectFunctionLibrary::SelectBuffClass(const UDataTab
 	return SelectedBuffs;
 }
 
-void UBuffSelectFunctionLibrary::AddBuff(UAbilitySystemComponent* ASC, TMap<FGameplayTag, FBuffInfo>& BuffInfo,
+FGameplayAbilitySpecHandle UBuffSelectFunctionLibrary::AddBuff(UAbilitySystemComponent* ASC, TMap<FGameplayTag, FBuffInfo>& BuffInfo,
 	TSubclassOf<UGameplayAbility> AbilityClass, const FGameplayTag& BuffTag)
 {
-	if (!ASC || !AbilityClass) return;
+	if (!ASC || !AbilityClass) return FGameplayAbilitySpecHandle();
 	if (BuffInfo.Contains(BuffTag))
 	{
 		ASC->ClearAllAbilitiesWithInputID(BuffInfo[BuffTag].InputID);
@@ -93,5 +96,5 @@ void UBuffSelectFunctionLibrary::AddBuff(UAbilitySystemComponent* ASC, TMap<FGam
 		BuffInfo.Add(BuffTag, FBuffInfo(1, BuffInfo.Num()));
 	}
 	FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, BuffInfo[BuffTag].Level, BuffInfo[BuffTag].InputID);
-	ASC->GiveAbility(AbilitySpec);
+	return ASC->GiveAbility(AbilitySpec);
 }

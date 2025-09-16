@@ -5,7 +5,21 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystemInterface.h"
+#include "Buff/HealthAttributeSet.h"
 #include "Zombie.generated.h"
+
+// Debuff粒子效果数据行
+USTRUCT(BlueprintType)
+struct FParticleInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 Count = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UParticleSystemComponent> ParticleSystemComponent;
+};
 
 USTRUCT(BlueprintType)
 struct FZombieDataRow : public FTableRowBase
@@ -46,7 +60,7 @@ struct FZombieDataRow : public FTableRowBase
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FZombieDiedSignature, class AZombie*, Zombie);
 
 UCLASS()
-class FPS_START_API AZombie : public ACharacter
+class FPS_START_API AZombie : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -54,10 +68,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Property")
 	FDataTableRowHandle ZombieDataRowHandle;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Property")
-	float Health = 100.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Property")
 	float AttackPoint = 10.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Property")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities")
+	TObjectPtr<UHealthAttributeSet> AttributeSet;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	TObjectPtr <UAbilitySystemComponent> AbilitySystemComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool bIsDead = false;
 	// 网格体
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
@@ -69,6 +85,8 @@ protected:
 	bool bDoneDamage = false; // 标记是否已造成伤害，防止多次伤害
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "State")
 	bool bIsAttacking = false; // 标记是否正在攻击
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
+	TMap<FGameplayTag, FParticleInfo> ParticleMap; // 存储粒子特效信息
 	// 声明回调函数
 	UFUNCTION()
 	void OnHitMontageEnded(UAnimMontage* Montage, bool bInterrupted);
@@ -92,6 +110,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	// 初始化属性
+	virtual void InitialAttributeSet();
 
 public:
 	// Called every frame
@@ -102,6 +122,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Damage")
 	virtual UAnimMontage* SelectHitReactMontage(FName BoneName) const;
+
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UFUNCTION(BlueprintCallable, Category = "Damage")
 	void HandlePointDamage(float Damage,
@@ -122,6 +144,7 @@ public:
 	virtual void EndDoDamage();
 
 	// 处理死亡逻辑
+	UFUNCTION(BlueprintCallable)
 	virtual void Die(AActor* Attacker);
 
 	// 重置状态，准备复用
@@ -131,6 +154,16 @@ public:
 	// 开始运行
 	UFUNCTION(BlueprintCallable, Category = "State")
 	virtual void StartPlay();
+
+	UFUNCTION(BlueprintCallable, Category = "Effect")
+	virtual void SpawnParticle(const FGameplayTag& ParticleTag, UParticleSystem* Particle);
+
+	UFUNCTION(BlueprintCallable, Category = "Effect")
+	virtual void RemoveParticle(const FGameplayTag& ParticleTag);
+
+	// 清空所有Particle
+	UFUNCTION(BlueprintCallable, Category = "Effect")
+	virtual void RemoveAllParticle();
 
 	// 丧尸死亡事件
 	UPROPERTY(BlueprintAssignable, Category = "Events")

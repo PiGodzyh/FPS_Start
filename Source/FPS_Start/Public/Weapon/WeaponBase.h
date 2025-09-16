@@ -78,9 +78,13 @@ public:
 	// 获取武器数据
 	const FWeaponDataRow& GetWeaponData() const { return WeaponData; }
 
-	// 获取武器Tah
+	// 获取武器Tag
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	FGameplayTag GetWeaponTag() const { return WeaponData.WeaponTag; }
+
+	// 设置子弹数量
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void SetCurrentBullet(int32 NewBullet) { CurrentBullet = FMath::Clamp(NewBullet, 0, WeaponData.ClipSize); }
 
 	// 发射单发后减少子弹等逻辑
 	virtual void AfterFireSingle();
@@ -99,5 +103,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void Reload();
 
-
+	// 补充一定数量的弹药
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual void RefundAmmo(int32 AmmoCount);
 };

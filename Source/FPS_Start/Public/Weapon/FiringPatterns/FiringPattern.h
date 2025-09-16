@@ -14,4 +14,7 @@ class UFiringPattern : public UObject
 public:
     /* 单次开火 */
     virtual void FireSingle(AWeaponBase* Weapon, AController* Instigator);
+
+    UFUNCTION()
+    static void ApplyGameplayEffect(AController* Instigator, const FHitResult& Hit);
 };

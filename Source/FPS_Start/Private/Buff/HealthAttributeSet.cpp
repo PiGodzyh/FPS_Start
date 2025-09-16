@@ -1,10 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Buff/PlayerAttributeSet.h"
+#include "Buff/HealthAttributeSet.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "GameplayEffectExtension.h"
 
-void UPlayerAttributeSet::SetHealth(float NewValue)
+void UHealthAttributeSet::SetHealth(float NewValue)
 {
 	NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
 	if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
@@ -13,7 +15,7 @@ void UPlayerAttributeSet::SetHealth(float NewValue)
 	}
 }
 
-bool UPlayerAttributeSet::PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data)
+bool UHealthAttributeSet::PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PreGameplayEffectExecute(Data);
 
@@ -25,13 +27,27 @@ bool UPlayerAttributeSet::PreGameplayEffectExecute(struct FGameplayEffectModCall
 	return true;
 }
 
-void UPlayerAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+void UHealthAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(GetHealth());
+		if (GetHealth() <= 0 && !bIsDead)
+		{
+			FGameplayEventData Payload;
+			Payload.EventTag = FGameplayTag::RequestGameplayTag("Event.Death");
+			Payload.Instigator = Data.EffectSpec.GetContext().GetInstigator();
+			Payload.Target = GetOwningActor();
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwningActor(),
+				Payload.EventTag, Payload);
+			bIsDead = true;
+		}
+		if (GetHealth() > 0)
+		{
+			bIsDead = false;
+		}
 	}
 
 	if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
@@ -42,4 +58,9 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffect
 		const float NewHealth = NewMaxHealth - OldMaxHealth + OldHealth;
 		SetHealth(NewHealth);
 	}
+}
+
+void UHealthAttributeSet::ResetDeadStatus()
+{
+	bIsDead = false;
 }

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "FiringPattern.h"
-#include "Kismet/GameplayStatics.h"
 #include "FiringPatternInstantNoPen.generated.h"
 
 /**
