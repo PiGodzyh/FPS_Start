@@ -9,6 +9,7 @@
 #include "Buff/HealthAttributeSet.h"
 #include "Zombie.generated.h"
 
+class UZombieAttributeSet;
 // Debuff粒子效果数据行
 USTRUCT(BlueprintType)
 struct FParticleInfo
@@ -70,7 +71,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Property")
 	float AttackPoint = 10.f;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities")
-	TObjectPtr<UHealthAttributeSet> AttributeSet;
+	TObjectPtr<UZombieAttributeSet> AttributeSet;
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	TObjectPtr <UAbilitySystemComponent> AbilitySystemComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
@@ -154,6 +155,10 @@ public:
 	// 开始运行
 	UFUNCTION(BlueprintCallable, Category = "State")
 	virtual void StartPlay();
+
+	// 是否处于死亡状态
+	UFUNCTION(BlueprintCallable, Category = "State")
+	bool IsDead()const { return bIsDead; }
 
 	UFUNCTION(BlueprintCallable, Category = "Effect")
 	virtual void SpawnParticle(const FGameplayTag& ParticleTag, UParticleSystem* Particle);

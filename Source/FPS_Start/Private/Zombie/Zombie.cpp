@@ -9,10 +9,12 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Buff/DamageGameplayEffect.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h" 
 #include "Particles/ParticleSystemComponent.h"
 #include "Zombie/ZombiePool.h"
+#include "Zombie/ZombieAttributeSet.h"
 
 void AZombie::OnHitMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
@@ -38,8 +40,8 @@ AZombie::AZombie()
 	// 创建 ASC
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 
-	// 创建属性集 —— 只要 ASC 已存在，这里它就会自动注册
-	AttributeSet = CreateDefaultSubobject<UHealthAttributeSet>(TEXT("AttributeSet"));
+	// 创建属性集并自动注册
+	AttributeSet = CreateDefaultSubobject<UZombieAttributeSet>(TEXT("AttributeSet"));
 }
 
 // Called when the game starts or when spawned
@@ -63,6 +65,7 @@ void AZombie::InitialAttributeSet()
 {
 	AttributeSet->SetMaxHealth(GetZombieData().MaxHealth);
 	AttributeSet->SetHealth(GetZombieData().MaxHealth);
+	AttributeSet->SetMaxWalkSpeed(200.f);
 	AttributeSet->ResetDeadStatus();
 }
 
@@ -70,6 +73,9 @@ void AZombie::InitialAttributeSet()
 void AZombie::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	// 每帧读取速度属性，更新角色移动速度
+	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMaxWalkSpeed();
+	FString Message = FString::Printf(TEXT("Speed: %.1f"), AttributeSet->GetMaxWalkSpeed());
 }
 
 // Called to bind functionality to input
@@ -236,6 +242,11 @@ void AZombie::Die(AActor* Attacker)
 		AICon->Destroy();       // 彻底销毁控制器
 	}
 
+	// 从存活列表中移除
+	if (UZombiePool* Pool = GetGameInstance()->GetSubsystem<UZombiePool>(); Pool)
+	{
+		Pool->RemoveZombieFromAlive(this);
+	}
 	// 延迟后回收到对象池
 	FTimerHandle TimerHandle;
 	GetWorldTimerManager().SetTimer(

@@ -14,7 +14,7 @@ void UZombiePool::WarmPool(const TArray<FZombieSpawnData>& ZombieSpawnDataArray)
 		TSubclassOf<AZombie> ZombieClass = ZombieSpawnData.ZombieClass;
 		int32 Count = ZombieSpawnData.Count; // 预生成所有丧尸
 		ZombieSumMap.FindOrAdd(ZombieClass) += Count;
-		
+
 	}
 	// 为每种丧尸创建桶
 	for (const auto& Pair : ZombieSumMap)
@@ -33,7 +33,7 @@ AZombie* UZombiePool::Acquire(const TSubclassOf<AZombie>& ZombieClass)
 	// 确保有这个类的桶
 	if (!Buckets.Contains(ZombieClass))
 		CreateBucket(ZombieClass);
-	
+
 	auto& Bucket = Buckets[ZombieClass];
 	// 对象池即将空了，批量补充
 	if (Bucket.Num() <= 3)
@@ -44,10 +44,17 @@ AZombie* UZombiePool::Acquire(const TSubclassOf<AZombie>& ZombieClass)
 	{
 		// 对象池中有空闲的，直接取
 		AZombie* NewZombie = Bucket.Pop();
+		AliveZombies.Add(NewZombie);
 		NewZombie->StartPlay();
 		return NewZombie;
 	}
 	return nullptr;
+}
+
+void UZombiePool::RemoveZombieFromAlive(AZombie* Zombie)
+{
+	if (!Zombie) return;
+	AliveZombies.Remove(Zombie);
 }
 
 void UZombiePool::Release(AZombie* Zombie)
@@ -60,6 +67,44 @@ void UZombiePool::Release(AZombie* Zombie)
 	Zombie->BackToPool();
 	Zombie->SetActorTransform(PoolTransform);
 	Bucket.Add(Zombie);
+}
+
+void UZombiePool::FindZombieInRadius(
+	const FVector& CenterLocation,
+	const float& Radius,
+	TArray<AZombie*>& OutZombies,
+	bool Ordered,
+	int32 Count)
+{
+	OutZombies.Reset();
+
+	// 参数检查
+	if (Count == 0)return;
+
+	// 范围内僵尸一次性收进来
+	for (AZombie* Z : AliveZombies)
+	{
+		if (Z && FVector::DistSquared(Z->GetActorLocation(), CenterLocation) <= Radius * Radius)
+		{
+			OutZombies.Add(Z);
+		}
+	}
+
+	if (Ordered)
+	{
+		// 按距离从近到远排序（Lambda 捕获 CenterLocation）
+		Algo::Sort(OutZombies, [&CenterLocation](AZombie* A, AZombie* B)
+			{
+				float DistA = FVector::DistSquared(A->GetActorLocation(), CenterLocation);
+				float DistB = FVector::DistSquared(B->GetActorLocation(), CenterLocation);
+				return DistA < DistB;
+			});
+	}
+
+	if (Count >= 0)
+	{
+		OutZombies.SetNum(FMath::Min(Count, OutZombies.Num()));
+	}
 }
 
 void UZombiePool::CreateBucket(const TSubclassOf<AZombie>& ZombieClass)
