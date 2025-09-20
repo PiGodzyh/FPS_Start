@@ -88,6 +88,8 @@ protected:
 	bool bIsAttacking = false; // 标记是否正在攻击
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
 	TMap<FGameplayTag, FParticleInfo> ParticleMap; // 存储粒子特效信息
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Grid")
+	FVector OldLocation; // 网格存储旧位置
 	// 声明回调函数
 	UFUNCTION()
 	void OnHitMontageEnded(UAnimMontage* Montage, bool bInterrupted);
@@ -169,6 +171,12 @@ public:
 	// 清空所有Particle
 	UFUNCTION(BlueprintCallable, Category = "Effect")
 	virtual void RemoveAllParticle();
+
+	UFUNCTION(BlueprintCallable, Category = "Grid")
+	virtual FVector GetOldLocation()const { return OldLocation; }
+
+	UFUNCTION(BlueprintCallable, Category = "Grid")
+	virtual void UpdateOldLocation();
 
 	// 丧尸死亡事件
 	UPROPERTY(BlueprintAssignable, Category = "Events")

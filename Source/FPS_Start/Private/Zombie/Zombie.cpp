@@ -76,6 +76,12 @@ void AZombie::Tick(float DeltaTime)
 	// 每帧读取速度属性，更新角色移动速度
 	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMaxWalkSpeed();
 	FString Message = FString::Printf(TEXT("Speed: %.1f"), AttributeSet->GetMaxWalkSpeed());
+
+	if (UZombiePool* Pool = GetGameInstance()->GetSubsystem<UZombiePool>();Pool->ZombieStorage == EZombieStorageType::Grid)
+	{
+		Pool->MoveZombie(this, OldLocation, GetActorLocation());
+		UpdateOldLocation();
+	}
 }
 
 // Called to bind functionality to input
@@ -357,4 +363,9 @@ void AZombie::RemoveAllParticle()
 		}
 	}
 	ParticleMap.Reset();
+}
+
+void AZombie::UpdateOldLocation()
+{
+	OldLocation = GetActorLocation();
 }

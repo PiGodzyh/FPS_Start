@@ -9,6 +9,27 @@
 #include "ZombiePool.generated.h"
 
 class AZombie;
+
+// 丧尸存储类型
+enum class EZombieStorageType : uint8
+{
+	Common, // 普通
+	Grid // 网格存储
+};
+
+// 网格体，用于空间划分，提升查找效率
+struct FZombieGrid
+{
+	static float GridSize;
+	TSet<AZombie*> Zombies;
+
+	static TPair<int32,int32>LocationToGrid(const FVector& Location)
+	{
+		int32 X = FMath::FloorToInt(Location.X / GridSize);
+		int32 Y = FMath::FloorToInt(Location.Y / GridSize);
+		return TPair<int32, int32>(X, Y);
+	}
+};
 /**
  * 丧尸对象池
  * 用于管理丧尸的创建和回收，提升性能
@@ -30,6 +51,9 @@ public:
 	void RemoveZombieFromAlive(AZombie* Zombie);
 
 	UFUNCTION(BlueprintCallable)
+	void AddZombieToAlive(AZombie* Zombie);
+
+	UFUNCTION(BlueprintCallable)
 	void Release(AZombie* Zombie);
 
 	/*
@@ -45,6 +69,19 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void FindZombieInRadius(const FVector& CenterLocation, const float& Radius, TArray<AZombie*>& OutZombies, bool Ordered = false, int32 Count = -1);
 
+	// 初始化丧尸网格位置。放置在世界后调用
+	UFUNCTION(BlueprintCallable)
+	void InitialZombieGrid(AZombie* Zombie);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveZombieFromGrid(AZombie* Zombie);
+
+	UFUNCTION(BlueprintCallable)
+	void AddZombieToGrid(AZombie* Zombie);
+
+	UFUNCTION(BlueprintCallable)
+	void MoveZombie(AZombie* Zombie, const FVector& OldLocation, const FVector& NewLocation);
+
 private:
 	FTransform PoolTransform = FTransform(FVector(0, 0, 500));
 	// 每个派生类一条空闲队列
@@ -58,8 +95,13 @@ protected:
 
 	int32 TotalZombieCount = 0;
 
+	TMap<TPair<int32, int32>, FZombieGrid> ZombieGrids;
+
 	void CreateBucket(const TSubclassOf<AZombie>& ZombieClass);
 
 	// 批量创建
 	void BatchSpawn(const TSubclassOf<AZombie>& Bucket, const int32& Count);
+
+public:
+	EZombieStorageType ZombieStorage = EZombieStorageType::Common;
 };
