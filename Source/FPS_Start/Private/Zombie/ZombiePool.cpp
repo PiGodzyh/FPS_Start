@@ -45,7 +45,7 @@ AZombie* UZombiePool::Acquire(const TSubclassOf<AZombie>& ZombieClass)
 	if (Bucket.Num() > 0)
 	{
 		// 对象池中有空闲的，直接取
-		AZombie* NewZombie = Bucket.Pop();
+		AZombie* NewZombie = Bucket.Pop().Get();
 		NewZombie->StartPlay();
 		return NewZombie;
 	}
@@ -104,11 +104,11 @@ void UZombiePool::FindZombieInRadius(
 
 	if (ZombieStorage == EZombieStorageType::Common)
 	{
-		for (AZombie* Z : AliveZombies)
+		for (auto Z : AliveZombies)
 		{
-			if (Z && FVector::DistSquared(Z->GetActorLocation(), CenterLocation) <= Radius * Radius)
+			if (Z.IsValid() && FVector::DistSquared(Z->GetActorLocation(), CenterLocation) <= Radius * Radius)
 			{
-				OutZombies.Add(Z);
+				OutZombies.Add(Z.Get());
 			}
 		}
 	}
@@ -123,11 +123,11 @@ void UZombiePool::FindZombieInRadius(
 				TPair<int32, int32> CheckGrid(X, Y);
 				if (ZombieGrids.Contains(CheckGrid))
 				{
-					for (AZombie* Z : ZombieGrids[CheckGrid].Zombies)
+					for (auto Z : ZombieGrids[CheckGrid].Zombies)
 					{
-						if (Z && FVector::DistSquared(Z->GetActorLocation(), CenterLocation) <= Radius * Radius)
+						if (Z.IsValid() && FVector::DistSquared(Z->GetActorLocation(), CenterLocation) <= Radius * Radius)
 						{
-							OutZombies.Add(Z);
+							OutZombies.Add(Z.Get());
 						}
 					}
 				}
@@ -150,12 +150,6 @@ void UZombiePool::FindZombieInRadius(
 	{
 		OutZombies.SetNum(FMath::Min(Count, OutZombies.Num()));
 	}
-}
-
-void UZombiePool::InitialZombieGrid(AZombie* Zombie)
-{
-	AddZombieToGrid(Zombie);
-	Zombie->UpdateOldLocation();
 }
 
 void UZombiePool::RemoveZombieFromGrid(AZombie* Zombie)
@@ -191,8 +185,7 @@ void UZombiePool::MoveZombie(AZombie* Zombie, const FVector& OldLocation, const 
 void UZombiePool::CreateBucket(const TSubclassOf<AZombie>& ZombieClass)
 {
 	// 创建一个新的桶
-	TArray<AZombie*> NewBucket;
-	FActorSpawnParameters Params = FActorSpawnParameters();
+	TArray<TWeakObjectPtr<AZombie>> NewBucket;
 	Buckets.Add(ZombieClass, NewBucket);
 }
 

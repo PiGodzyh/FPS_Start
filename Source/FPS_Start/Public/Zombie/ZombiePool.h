@@ -21,7 +21,7 @@ enum class EZombieStorageType : uint8
 struct FZombieGrid
 {
 	static float GridSize;
-	TSet<AZombie*> Zombies;
+	TSet<TWeakObjectPtr<AZombie>> Zombies;
 
 	static TPair<int32,int32>LocationToGrid(const FVector& Location)
 	{
@@ -56,6 +56,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Release(AZombie* Zombie);
 
+	UFUNCTION(BlueprintCallable)
+	int32 GetAliveZombieCount()const { return AliveZombies.Num(); }
+
 	/*
 	 * 在指定位置和半径内查找丧尸
 	 * 参数：
@@ -69,10 +72,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void FindZombieInRadius(const FVector& CenterLocation, const float& Radius, TArray<AZombie*>& OutZombies, bool Ordered = false, int32 Count = -1);
 
-	// 初始化丧尸网格位置。放置在世界后调用
-	UFUNCTION(BlueprintCallable)
-	void InitialZombieGrid(AZombie* Zombie);
-
 	UFUNCTION(BlueprintCallable)
 	void RemoveZombieFromGrid(AZombie* Zombie);
 
@@ -85,9 +84,9 @@ public:
 private:
 	FTransform PoolTransform = FTransform(FVector(0, 0, 500));
 	// 每个派生类一条空闲队列
-	TMap<TSubclassOf<AZombie>, TArray<AZombie*>> Buckets;
+	TMap<TSubclassOf<AZombie>, TArray<TWeakObjectPtr<AZombie>>> Buckets;
 	// 存活的丧尸
-	TSet<AZombie*> AliveZombies;
+	TSet<TWeakObjectPtr<AZombie>> AliveZombies;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
