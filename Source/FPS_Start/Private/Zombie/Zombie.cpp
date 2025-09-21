@@ -79,8 +79,9 @@ void AZombie::Tick(float DeltaTime)
 
 	if (UZombiePool* Pool = GetGameInstance()->GetSubsystem<UZombiePool>();Pool->ZombieStorage == EZombieStorageType::Grid)
 	{
-		Pool->MoveZombie(this, OldLocation, GetActorLocation());
-		UpdateOldLocation();
+		const FIntPoint NewGrid = FZombieGrid::LocationToGrid(GetActorLocation());
+		Pool->MoveZombie(this, OldGrid, NewGrid);
+		UpdateOldGridWithNewGrid(NewGrid);
 	}
 }
 
@@ -365,7 +366,12 @@ void AZombie::RemoveAllParticle()
 	ParticleMap.Reset();
 }
 
-void AZombie::UpdateOldLocation()
+void AZombie::UpdateOldGrid()
 {
-	OldLocation = GetActorLocation();
+	OldGrid = FZombieGrid::LocationToGrid(GetActorLocation());
+}
+
+void AZombie::UpdateOldGridWithNewGrid(const FIntPoint& NewGrid)
+{
+	OldGrid = NewGrid;
 }

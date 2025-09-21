@@ -89,7 +89,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
 	TMap<FGameplayTag, FParticleInfo> ParticleMap; // 存储粒子特效信息
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Grid")
-	FVector OldLocation; // 网格存储旧位置
+	FIntPoint OldGrid; // 网格存储旧位置
 	// 声明回调函数
 	UFUNCTION()
 	void OnHitMontageEnded(UAnimMontage* Montage, bool bInterrupted);
@@ -173,10 +173,13 @@ public:
 	virtual void RemoveAllParticle();
 
 	UFUNCTION(BlueprintCallable, Category = "Grid")
-	virtual FVector GetOldLocation()const { return OldLocation; }
+	virtual FIntPoint GetOldGrid()const { return OldGrid; }
 
 	UFUNCTION(BlueprintCallable, Category = "Grid")
-	virtual void UpdateOldLocation();
+	virtual void UpdateOldGrid();
+
+	UFUNCTION(BlueprintCallable, Category = "Grid")
+	virtual void UpdateOldGridWithNewGrid(const FIntPoint& NewGrid);
 
 	// 丧尸死亡事件
 	UPROPERTY(BlueprintAssignable, Category = "Events")

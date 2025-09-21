@@ -23,11 +23,11 @@ struct FZombieGrid
 	static float GridSize;
 	TSet<TWeakObjectPtr<AZombie>> Zombies;
 
-	static TPair<int32,int32>LocationToGrid(const FVector& Location)
+	static FIntPoint LocationToGrid(const FVector& Location)
 	{
 		int32 X = FMath::FloorToInt(Location.X / GridSize);
 		int32 Y = FMath::FloorToInt(Location.Y / GridSize);
-		return TPair<int32, int32>(X, Y);
+		return { X, Y };
 	}
 };
 /**
@@ -38,7 +38,8 @@ UCLASS()
 class UZombiePool : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
-
+	static int32 CommonGate;
+	static int32 GridGate;
 public:
 	// 初始化时调用
 	UFUNCTION(BlueprintCallable)
@@ -79,7 +80,7 @@ public:
 	void AddZombieToGrid(AZombie* Zombie);
 
 	UFUNCTION(BlueprintCallable)
-	void MoveZombie(AZombie* Zombie, const FVector& OldLocation, const FVector& NewLocation);
+	void MoveZombie(AZombie* Zombie, const FIntPoint& OldGrid, const FIntPoint& NewGrid);
 
 private:
 	FTransform PoolTransform = FTransform(FVector(0, 0, 500));
@@ -94,7 +95,7 @@ protected:
 
 	int32 TotalZombieCount = 0;
 
-	TMap<TPair<int32, int32>, FZombieGrid> ZombieGrids;
+	TMap<FIntPoint, FZombieGrid> ZombieGrids;
 
 	void CreateBucket(const TSubclassOf<AZombie>& ZombieClass);
 

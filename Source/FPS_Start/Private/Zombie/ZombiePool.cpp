@@ -6,6 +6,9 @@
 
 float FZombieGrid::GridSize = 500.f;
 
+int32 UZombiePool::CommonGate = -1;// 低于100个丧尸切换到普通存储
+int32 UZombiePool::GridGate = 1;// 高于150个丧尸切换到网格存储
+
 void UZombiePool::WarmPool(const TArray<FZombieSpawnData>& ZombieSpawnDataArray)
 {
 	UE_LOG(LogTemp, Log, TEXT("对象池开始预热"));
@@ -59,7 +62,7 @@ void UZombiePool::RemoveZombieFromAlive(AZombie* Zombie)
 	// 从网格中移除
 	RemoveZombieFromGrid(Zombie);
 	// 更改存储策略
-	if (ZombieStorage == EZombieStorageType::Grid && AliveZombies.Num() < 100)
+	if (ZombieStorage == EZombieStorageType::Grid && AliveZombies.Num() < CommonGate)
 	{
 		ZombieStorage = EZombieStorageType::Common;
 	}
@@ -72,7 +75,7 @@ void UZombiePool::AddZombieToAlive(AZombie* Zombie)
 	// 加入网格
 	AddZombieToGrid(Zombie);
 	// 更改存储策略
-	if (ZombieStorage == EZombieStorageType::Common && AliveZombies.Num() > 150)
+	if (ZombieStorage == EZombieStorageType::Common && AliveZombies.Num() > GridGate)
 	{
 		ZombieStorage = EZombieStorageType::Grid;
 	}
@@ -114,13 +117,13 @@ void UZombiePool::FindZombieInRadius(
 	}
 	else if (ZombieStorage == EZombieStorageType::Grid)
 	{
-		TPair<int32, int32> Grid = FZombieGrid::LocationToGrid(CenterLocation);
+		FIntPoint Grid = FZombieGrid::LocationToGrid(CenterLocation);
 		int32 Range = FMath::CeilToInt(Radius / FZombieGrid::GridSize);
-		for (int32 X = Grid.Key - Range; X <= Grid.Key + Range; X++)
+		for (int32 X = Grid.X - Range; X <= Grid.X + Range; X++)
 		{
-			for (int32 Y = Grid.Value - Range; Y <= Grid.Value + Range; Y++)
+			for (int32 Y = Grid.Y - Range; Y <= Grid.Y + Range; Y++)
 			{
-				TPair<int32, int32> CheckGrid(X, Y);
+				FIntPoint CheckGrid(X, Y);
 				if (ZombieGrids.Contains(CheckGrid))
 				{
 					for (auto Z : ZombieGrids[CheckGrid].Zombies)
@@ -154,7 +157,7 @@ void UZombiePool::FindZombieInRadius(
 
 void UZombiePool::RemoveZombieFromGrid(AZombie* Zombie)
 {
-	const TPair<int32, int32> Grid = FZombieGrid::LocationToGrid(Zombie->GetOldLocation());
+	const FIntPoint& Grid = Zombie->GetOldGrid();
 	if (ZombieGrids.Contains(Grid))
 	{
 		ZombieGrids[Grid].Zombies.Remove(Zombie);
@@ -163,23 +166,20 @@ void UZombiePool::RemoveZombieFromGrid(AZombie* Zombie)
 
 void UZombiePool::AddZombieToGrid(AZombie* Zombie)
 {
-	const TPair<int32, int32> Grid = FZombieGrid::LocationToGrid(Zombie->GetActorLocation());
+	const FIntPoint Grid = FZombieGrid::LocationToGrid(Zombie->GetActorLocation());
 	ZombieGrids.FindOrAdd(Grid).Zombies.Add(Zombie);
 }
 
-void UZombiePool::MoveZombie(AZombie* Zombie, const FVector& OldLocation, const FVector& NewLocation)
+void UZombiePool::MoveZombie(AZombie* Zombie, const FIntPoint& OldGrid, const FIntPoint& NewGrid)
 {
-	// 计算旧位置和新位置所在的网格
-	const TPair<int32, int32> OldGrid = FZombieGrid::LocationToGrid(OldLocation);
-	const TPair<int32, int32> NewGrid = FZombieGrid::LocationToGrid(NewLocation);
 	// 如果网格没有变化，直接返回
 	if (OldGrid == NewGrid)
 	{
 		return;
 	}
-
+	check(ZombieGrids.Contains(OldGrid));
 	ZombieGrids[OldGrid].Zombies.Remove(Zombie);
-	ZombieGrids[NewGrid].Zombies.Add(Zombie);
+	ZombieGrids.FindOrAdd(NewGrid).Zombies.Add(Zombie);
 }
 
 void UZombiePool::CreateBucket(const TSubclassOf<AZombie>& ZombieClass)

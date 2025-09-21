@@ -22,12 +22,7 @@ bool UBuffSelectFunctionLibrary::IsMatchedWeapon(FGameplayTag WeaponTag, const F
 	// 如果没有要求武器标签，则视为匹配
 	if (WeaponTags.Num() == 0)
 		return true;
-	while (WeaponTag.IsValid())
-	{
-		if (WeaponTags.HasTag(WeaponTag))return true;
-		WeaponTag = WeaponTag.RequestDirectParent();
-	}
-	return false;
+	return WeaponTag.MatchesAny(WeaponTags);
 }
 
 TArray<FSelectedBuff> UBuffSelectFunctionLibrary::SelectBuffClass(const UDataTable* BuffDataTable, const FGameplayTag& CurrentWeaponTag,
