@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Zombie.h"
-#include "Subsystems/GameInstanceSubsystem.h"
+#include "Subsystems/WorldSubsystem.h"
 #include "WavesDataAsset.h"
 #include "ZombiePool.generated.h"
 
@@ -35,12 +35,14 @@ struct FZombieGrid
  * 用于管理丧尸的创建和回收，提升性能
  */
 UCLASS()
-class UZombiePool : public UGameInstanceSubsystem
+class FPS_START_API UZombiePool : public UTickableWorldSubsystem
 {
 	GENERATED_BODY()
 	static int32 CommonGate;
 	static int32 GridGate;
 public:
+	virtual void Tick(float DeltaTime) override;
+	virtual TStatId GetStatId() const override;
 	// 初始化时调用
 	UFUNCTION(BlueprintCallable)
 	void WarmPool(const TArray<FZombieSpawnData>& ZombieSpawnDataArray);

@@ -77,7 +77,7 @@ void AZombie::Tick(float DeltaTime)
 	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMaxWalkSpeed();
 	FString Message = FString::Printf(TEXT("Speed: %.1f"), AttributeSet->GetMaxWalkSpeed());
 
-	if (UZombiePool* Pool = GetGameInstance()->GetSubsystem<UZombiePool>();Pool->ZombieStorage == EZombieStorageType::Grid)
+	if (UZombiePool* Pool = GetWorld()->GetSubsystem<UZombiePool>();Pool->ZombieStorage == EZombieStorageType::Grid)
 	{
 		const FIntPoint NewGrid = FZombieGrid::LocationToGrid(GetActorLocation());
 		Pool->MoveZombie(this, OldGrid, NewGrid);
@@ -250,7 +250,7 @@ void AZombie::Die(AActor* Attacker)
 	}
 
 	// 从存活列表中移除
-	if (UZombiePool* Pool = GetGameInstance()->GetSubsystem<UZombiePool>(); Pool)
+	if (UZombiePool* Pool = GetWorld()->GetSubsystem<UZombiePool>(); Pool)
 	{
 		Pool->RemoveZombieFromAlive(this);
 	}
@@ -260,7 +260,7 @@ void AZombie::Die(AActor* Attacker)
 		TimerHandle,
 		FTimerDelegate::CreateWeakLambda(this, [this]()
 			{
-				if (UZombiePool* Pool = GetGameInstance()->GetSubsystem<UZombiePool>(); Pool)
+				if (UZombiePool* Pool = GetWorld()->GetSubsystem<UZombiePool>(); Pool)
 				{
 					Pool->Release(this);
 				}

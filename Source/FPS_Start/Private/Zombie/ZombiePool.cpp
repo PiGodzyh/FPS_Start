@@ -4,10 +4,25 @@
 #include "Zombie/ZombiePool.h"
 #include "Zombie/Zombie.h"
 
+DECLARE_STATS_GROUP(TEXT("Find"), STATGROUP_Find, STATCAT_Advanced)
+DECLARE_CYCLE_STAT(TEXT("Total"), STAT_Total, STATGROUP_Find);
+DECLARE_CYCLE_STAT(TEXT("CommonFind"), STAT_CommonFind, STATGROUP_Find);
+DECLARE_CYCLE_STAT(TEXT("GridFind"), STAT_GridFind, STATGROUP_Find);
+
 float FZombieGrid::GridSize = 500.f;
 
-int32 UZombiePool::CommonGate = -1;// 低于100个丧尸切换到普通存储
-int32 UZombiePool::GridGate = 1;// 高于150个丧尸切换到网格存储
+int32 UZombiePool::CommonGate = 50;// 低于CommonGate个丧尸切换到普通存储
+int32 UZombiePool::GridGate = 100;// 高于GridGate个丧尸切换到网格存储
+
+void UZombiePool::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+TStatId UZombiePool::GetStatId() const
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UZombiePool, STATGROUP_Tickables);
+}
 
 void UZombiePool::WarmPool(const TArray<FZombieSpawnData>& ZombieSpawnDataArray)
 {
@@ -104,9 +119,10 @@ void UZombiePool::FindZombieInRadius(
 
 	// 参数检查
 	if (Radius <= 0 || Count == 0)return;
-
+	SCOPE_CYCLE_COUNTER(STAT_Total);
 	if (ZombieStorage == EZombieStorageType::Common)
 	{
+		SCOPE_CYCLE_COUNTER(STAT_CommonFind);
 		for (auto Z : AliveZombies)
 		{
 			if (Z.IsValid() && FVector::DistSquared(Z->GetActorLocation(), CenterLocation) <= Radius * Radius)
@@ -117,6 +133,7 @@ void UZombiePool::FindZombieInRadius(
 	}
 	else if (ZombieStorage == EZombieStorageType::Grid)
 	{
+		SCOPE_CYCLE_COUNTER(STAT_GridFind);
 		FIntPoint Grid = FZombieGrid::LocationToGrid(CenterLocation);
 		int32 Range = FMath::CeilToInt(Radius / FZombieGrid::GridSize);
 		for (int32 X = Grid.X - Range; X <= Grid.X + Range; X++)
