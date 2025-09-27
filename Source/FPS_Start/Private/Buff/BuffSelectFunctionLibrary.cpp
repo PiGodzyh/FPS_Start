@@ -26,10 +26,16 @@ bool UBuffSelectFunctionLibrary::IsMatchedWeapon(FGameplayTag WeaponTag, const F
 }
 
 TArray<FSelectedBuff> UBuffSelectFunctionLibrary::SelectBuffClass(const UDataTable* BuffDataTable, const FGameplayTag& CurrentWeaponTag,
-	const FGameplayTagContainer& CurrentBuffTags, const TMap<FGameplayTag, FBuffInfo>& BuffLevel)
+	const TMap<FGameplayTag, FBuffInfo>& BuffLevel)
 {
 	TArray<FSelectedBuff> AvailableBuffs = TArray<FSelectedBuff>();
 	TArray<FSelectedBuff> SelectedBuffs = TArray<FSelectedBuff>();
+
+	FGameplayTagContainer CurrentBuffTags;
+	for (const auto& BuffTag:BuffLevel)
+	{
+		CurrentBuffTags.AddTagFast(BuffTag.Key);
+	}
 
 	if (!BuffDataTable) return AvailableBuffs;
 

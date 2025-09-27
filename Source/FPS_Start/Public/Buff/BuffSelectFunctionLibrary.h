@@ -80,7 +80,7 @@ protected:
 public:
 	// 从数据表中选择符合条件的buff类，返回buff类名和对应等级的键值对
 	UFUNCTION(BlueprintCallable)
-	static TArray<FSelectedBuff> SelectBuffClass(const UDataTable* BuffDataTable, const FGameplayTag& CurrentWeaponTag, const FGameplayTagContainer& CurrentBuffTags, const TMap<FGameplayTag, FBuffInfo>& BuffLevel);
+	static TArray<FSelectedBuff> SelectBuffClass(const UDataTable* BuffDataTable, const FGameplayTag& CurrentWeaponTag, const TMap<FGameplayTag, FBuffInfo>& BuffLevel);
 	// 给ASC添加buff能力，并更新BuffInfo
 	UFUNCTION(BlueprintCallable)
 	static FGameplayAbilitySpecHandle AddBuff(UAbilitySystemComponent* ASC, UPARAM(Ref) TMap<FGameplayTag, FBuffInfo>& BuffInfo, TSubclassOf<UGameplayAbility> AbilityClass, const FGameplayTag& BuffTag);
